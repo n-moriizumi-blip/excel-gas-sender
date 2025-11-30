@@ -102,7 +102,8 @@ if YOUR_GAS_WEB_APP_URL != "https://script.google.com/macros/s/AKfycbxTrAlIOgbkZ
 else:
     # どちらかが空欄、またはGAS URLがプレースホルダーの場合にのみ注意書きを表示
     st.warning("⚠️ **上記入力欄を確認してください:**")
-    if YOUR_GAS_WEB_APP_URL == "ここにあなたの本物のGAS Web App URLを貼り付けてください":
+    if YOUR_GAS_WEB_APP_URL == "https://script.google.com/macros/s/AKfycbxTrAlIOgbkZ85yoEHWN6OxTSl74do-zw4IxrScETmjmL9BXlkU8iG0fR3Q8v12X2xD/exec":
         st.error("① コードの最上部にある `YOUR_GAS_WEB_APP_URL` に、本物のURLが書き込まれていません。GitHubでコードを修正してください。")
     if not SPREADSHEET_ID_INPUT:
         st.info("② ターゲットスプレッドシートIDを貼り付けてください。")
+
