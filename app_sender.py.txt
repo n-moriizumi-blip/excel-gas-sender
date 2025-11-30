@@ -9,10 +9,9 @@ import re
 # --- 固定設定 ---
 TARGET_SHEET_NAME = "テンプレート" 
 # -------------------------------------------------------------------------
-# 💡 ユーザー作業エリア: ここにあなたの GAS Web App URL を貼り付けてください 
+# 💡 設定完了: あなたの GAS Web App URL をコードに固定しました
 # -------------------------------------------------------------------------
-# !! 重要: 以下の文字列を、あなたの実際の GAS URL に置き換える !!
-YOUR_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTrAlIOgbkZ85yoEHWN6OxTSl74do-zw4IxrScETmjmL9BXlkU8iG0fR3Q8v12X2xD/exec" 
+YOUR_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTrAlIOgbkZ85yoEHWN6OxTSl74do-zw4IxrScETmjmL9BXlkU8iG0fR3Q8v12X2xD/exec"
 # -------------------------------------------------------------------------
 
 
@@ -21,7 +20,7 @@ st.title("📤 Excel → 【テンプレート】シートへマッピング書�
 st.success("✅ Web App URLの変更は不要になりました！")
 
 
-# GAS URLはコードに直接埋め込むため、読み取り専用として表示
+# GAS URLはコードに固定したため、読み取り専用として表示
 st.text_input("GAS ルーター Web App URL (設定完了済み)", YOUR_GAS_WEB_APP_URL, disabled=True) 
 
 # シートID入力欄
@@ -29,8 +28,8 @@ SPREADSHEET_ID_INPUT = st.text_input("🎯 ターゲットスプレッドシー�
 st.info(f"書き込み先シート: {TARGET_SHEET_NAME}")
 
 
-# GAS URLがプレースホルダーではなく、かつシートIDが入力されていれば実行ブロックへ
-if YOUR_GAS_WEB_APP_URL != "https://script.google.com/macros/s/AKfycbxTrAlIOgbkZ85yoEHWN6OxTSl74do-zw4IxrScETmjmL9BXlkU8iG0fR3Q8v12X2xD/exec" and SPREADSHEET_ID_INPUT:
+# GAS URLが設定済みとみなし、シートIDが入力されていれば実行ブロックへ
+if YOUR_GAS_WEB_APP_URL and SPREADSHEET_ID_INPUT:
     
     GAS_WEB_APP_URL = YOUR_GAS_WEB_APP_URL.strip() # 埋め込んだURLを使用
 
@@ -100,10 +99,5 @@ if YOUR_GAS_WEB_APP_URL != "https://script.google.com/macros/s/AKfycbxTrAlIOgbkZ
                 st.warning("Excelの形式、GASルーターのURL、またはスプレッドシートIDが正しいか確認してください。")
 
 else:
-    # どちらかが空欄、またはGAS URLがプレースホルダーの場合にのみ注意書きを表示
-    st.warning("⚠️ **上記入力欄を確認してください:**")
-    if YOUR_GAS_WEB_APP_URL == "https://script.google.com/macros/s/AKfycbxTrAlIOgbkZ85yoEHWN6OxTSl74do-zw4IxrScETmjmL9BXlkU8iG0fR3Q8v12X2xD/exec":
-        st.error("① コードの最上部にある `YOUR_GAS_WEB_APP_URL` に、本物のURLが書き込まれていません。GitHubでコードを修正してください。")
-    if not SPREADSHEET_ID_INPUT:
-        st.info("② ターゲットスプレッドシートIDを貼り付けてください。")
-
+    # シートIDが入力されていない場合にのみ注意書きを表示
+    st.warning("⚠️ ターゲットスプレッドシートIDを入力してください。")
