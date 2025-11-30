@@ -15,76 +15,82 @@ st.title("📤 Excel → 【テンプレート】シートへマッピング書�
 st.success("✅ Web App URLの変更は不要になりました！")
 
 # --- 設定項目 ---
-with st.expander("GAS Web App URL (一度だけ設定)", expanded=False):
-    GAS_WEB_APP_URL = st.text_input("GAS ルーター Web App URL", "ここに一度だけデプロイしたURLを貼り付け")
+# 💡 変更点: 初期値を空の文字列 "" に変更。これにより入力がなくても設定完了と見なされない。
+GAS_WEB_APP_URL_INPUT = st.text_input("GAS ルーター Web App URL (一度だけ設定)", "") 
+SPREADSHEET_ID_INPUT = st.text_input("🎯 ターゲットスプレッドシートID (URL全体を貼り付け可)", "")
 
-with st.expander("ターゲットスプレッドシート情報", expanded=True):
-    # スプレッドシートIDは、URLの d/ の次から /edit まで の部分です。
-    SPREADSHEET_ID_INPUT = st.text_input("🎯 ターゲットスプレッドシートID", "コピーしたシートのURLを貼り付け")
-    st.info(f"書き込み先シート: {TARGET_SHEET_NAME}")
+st.info(f"書き込み先シート: {TARGET_SHEET_NAME}")
 
 
-uploaded_file = st.file_uploader("Excelファイルをドロップ", type=["xlsx", "xls"])
+# GAS URL と シートID の両方が空欄でないことを確認
+if GAS_WEB_APP_URL_INPUT and SPREADSHEET_ID_INPUT:
+    GAS_WEB_APP_URL = GAS_WEB_APP_URL_INPUT.strip()
 
-if uploaded_file and GAS_WEB_APP_URL and SPREADSHEET_ID_INPUT and GAS_WEB_APP_URL != "ここに一度だけデプロイしたURLを貼り付け":
-    if st.button(f"🚀 【{TARGET_SHEET_NAME}】シートへマッピング書き込みを実行"):
-        
-        # ID自動抽出ロジック（URL全体が貼り付けられてもIDを抽出）
-        id_input = SPREADSHEET_ID_INPUT.strip()
-        
-        # URL全体 (https://docs.google.com/spreadsheets/d/ID/edit...) からIDを抽出
-        match = re.search(r'/d/([a-zA-Z0-9_-]+)/', id_input)
-        if match:
-            clean_spreadsheet_id = match.group(1)
-        # IDのみ、またはIDを含む短い文字列の場合
-        else:
-            clean_spreadsheet_id = id_input.split('/')[0].split('#')[0].split('?')[0]
-        
-        # 最終的なIDの検証（IDは通常30文字以上）
-        if len(clean_spreadsheet_id) < 30:
-            st.error("エラー: スプレッドシートIDが短すぎます。正しいIDを貼り付けてください。")
-            st.stop()
+    uploaded_file = st.file_uploader("Excelファイルをドロップ", type=["xlsx", "xls"])
+
+    if uploaded_file:
+        if st.button(f"🚀 【{TARGET_SHEET_NAME}】シートへマッピング書き込みを実行"):
             
-        try:
-            # 1. Excelを読み込み 
-            df = pd.read_excel(uploaded_file, header=None, sheet_name=0) 
-            raw_data = df.replace({np.nan: None}).values.tolist()
-
-            # 2. マッピングロジックの定義 (変更なし)
-            mappings = []
-            mappings.append({"target": "G1", "data": [[raw_data[1][6]]]})
-            mappings.append({"target": "O1", "data": [[raw_data[1][14]]]})
-            mappings.append({"target": "B4", "data": [[raw_data[4][1]]]})
-            mappings.append({"target": "F4", "data": [[raw_data[4][5]]]})
-            mappings.append({"target": "C5", "data": [row[2:15] for row in raw_data[5:23]]})
-            mappings.append({"target": "C30", "data": [row[2:15] for row in raw_data[34:52]]})
-            mappings.append({"target": "C55", "data": [row[2:15] for row in raw_data[64:82]]})
-            mappings.append({"target": "C80", "data": [row[2:15] for row in raw_data[94:112]]})
-            mappings.append({"target": "C105", "data": [row[2:15] for row in raw_data[123:141]]})
-            mappings.append({"target": "C130", "data": [row[2:15] for row in raw_data[153:171]]})
-
-            # 3. GAS Web App にペイロード (JSON) で送信
-            payload = {
-                "spreadsheetId": clean_spreadsheet_id,
-                "sheetName": TARGET_SHEET_NAME,
-                "mappings": mappings
-            }
+            # ID自動抽出ロジック（URL全体が貼り付けられてもIDを抽出）
+            id_input = SPREADSHEET_ID_INPUT.strip()
             
-            st.info(f"🔄 ID: {clean_spreadsheet_id} の {TARGET_SHEET_NAME} シートへデータを送信中...")
-            
-            headers = {'Content-Type': 'application/json; charset=utf-8'}
-            response = requests.post(GAS_WEB_APP_URL, data=json.dumps(payload).encode('utf-8'), headers=headers)
-            
-            # 4. 結果の確認
-            if response.status_code == 200 and "Success" in response.text:
-                st.success("✅ 書き込み成功！すべてのデータが指定範囲にマッピングされました。")
-                st.caption("GASからの応答: {}".format(response.text))
+            # URL全体 (https://docs.google.com/spreadsheets/d/ID/edit...) からIDを抽出
+            match = re.search(r'/d/([a-zA-Z0-9_-]+)/', id_input)
+            if match:
+                clean_spreadsheet_id = match.group(1)
+            # IDのみ、またはIDを含む短い文字列の場合
             else:
-                st.error("❌ 書き込み失敗。GASからのエラーメッセージを確認してください。")
+                clean_spreadsheet_id = id_input.split('/')[0].split('#')[0].split('?')[0]
+            
+            # 最終的なIDの検証（IDは通常30文字以上）
+            if len(clean_spreadsheet_id) < 30:
+                st.error("エラー: スプレッドシートIDが短すぎます。正しいIDを貼り付けてください。")
+                st.stop()
                 
-                error_message = f"\\nステータスコード: {response.status_code}\\n応答: {response.content.decode('utf-8')}"
-                st.code(error_message)
+            try:
+                # 1. Excelを読み込み 
+                df = pd.read_excel(uploaded_file, header=None, sheet_name=0) 
+                raw_data = df.replace({np.nan: None}).values.tolist()
 
-        except Exception as e:
-            st.error("致命的なエラー詳細: {}".format(e))
-            st.warning("Excelの形式、GASルーターのURL、またはスプレッドシートIDが正しいか確認してください。")
+                # 2. マッピングロジックの定義 (変更なし)
+                mappings = []
+                mappings.append({"target": "G1", "data": [[raw_data[1][6]]]})
+                mappings.append({"target": "O1", "data": [[raw_data[1][14]]]})
+                mappings.append({"target": "B4", "data": [[raw_data[4][1]]]})
+                mappings.append({"target": "F4", "data": [[raw_data[4][5]]]})
+                mappings.append({"target": "C5", "data": [row[2:15] for row in raw_data[5:23]]})
+                mappings.append({"target": "C30", "data": [row[2:15] for row in raw_data[34:52]]})
+                mappings.append({"target": "C55", "data": [row[2:15] for row in raw_data[64:82]]})
+                mappings.append({"target": "C80", "data": [row[2:15] for row in raw_data[94:112]]})
+                mappings.append({"target": "C105", "data": [row[2:15] for row in raw_data[123:141]]})
+                mappings.append({"target": "C130", "data": [row[2:15] for row in raw_data[153:171]]})
+
+                # 3. GAS Web App にペイロード (JSON) で送信
+                payload = {
+                    "spreadsheetId": clean_spreadsheet_id,
+                    "sheetName": TARGET_SHEET_NAME,
+                    "mappings": mappings
+                }
+                
+                st.info(f"🔄 ID: {clean_spreadsheet_id} の {TARGET_SHEET_NAME} シートへデータを送信中...")
+                
+                headers = {'Content-Type': 'application/json; charset=utf-8'}
+                response = requests.post(GAS_WEB_APP_URL, data=json.dumps(payload).encode('utf-8'), headers=headers)
+                
+                # 4. 結果の確認
+                if response.status_code == 200 and "Success" in response.text:
+                    st.success("✅ 書き込み成功！すべてのデータが指定範囲にマッピングされました。")
+                    st.caption("GASからの応答: {}".format(response.text))
+                else:
+                    st.error("❌ 書き込み失敗。GASからのエラーメッセージを確認してください。")
+                    
+                    error_message = f"\\nステータスコード: {response.status_code}\\n応答: {response.content.decode('utf-8')}"
+                    st.code(error_message)
+
+            except Exception as e:
+                st.error("致命的なエラー詳細: {}".format(e))
+                st.warning("Excelの形式、GASルーターのURL、またはスプレッドシートIDが正しいか確認してください。")
+
+else:
+    # どちらかが空欄の場合にのみ注意書きを表示
+    st.warning("上記2つの入力欄に、GAS Web App URL と ターゲットスプレッドシートID を貼り付けてください。")
